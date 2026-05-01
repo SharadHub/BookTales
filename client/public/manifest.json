@@ -1,0 +1,28 @@
+{
+  "name": "BookTales - Discover Your Next Favorite Book",
+  "short_name": "BookTales",
+  "description": "Discover and review your favorite books",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/placeholder-book.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/placeholder-book.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["books", "education", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr"
+}
