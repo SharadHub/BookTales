@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+@layer components {
+  .book-card {
+    @apply transition-transform duration-200 hover:scale-[1.02];
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-3xl bg-primary px-5 py-2 text-sm font-semibold text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-all;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-3xl border border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-neutral-dark hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 transition-colors;
+  }
+
+  .input-field {
+    @apply w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary-light focus:ring-offset-1 transition-all;
+  }
+
+  .card {
+    @apply rounded-3xl bg-white p-5 shadow-sm;
+  }
+}
+
+@layer utilities {
+  .aspect-916 {
+    aspect-ratio: 9 / 16;
+  }
+
+  .skip-link {
+    @apply absolute -top-16 left-0 bg-primary text-white px-4 py-2 rounded-md z-50 transition-transform;
+  }
+
+  .skip-link:focus {
+    @apply top-4;
+  }
+
+  .focus-visible:focus {
+    @apply outline-none ring-2 ring-primary ring-offset-2 ring-offset-white;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* High contrast mode support */
+  @media (prefers-contrast: high) {
+    .btn-primary {
+      @apply bg-black text-white border-2 border-white hover:bg-gray-800;
+    }
+
+    .btn-secondary {
+      @apply bg-white text-black border-2 border-black hover:bg-gray-100;
+    }
+
+    .input-field {
+      @apply border-2 border-black bg-white text-black;
+    }
+
+    .focus-visible:focus {
+      @apply ring-4 ring-black ring-offset-2;
+    }
+  }
+
+  /* Reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+
+    .book-card {
+      @apply transform-none;
+    }
+  }
+
+
+}
