@@ -47,3 +47,14 @@ backend/uploads/books/*.gif
 
 # Automation Scripts
 push_individually.sh
+
+# Python virtual environment and data files
+data/venv/
+data/__pycache__/
+data/*.pyc
+data/*.pyo
+data/*.pyd
+data/.Python
+data/venv*/
+data/env/
+data/.env
