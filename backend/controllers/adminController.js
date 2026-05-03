@@ -1,21 +1,32 @@
 const { User, Book, Review } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError, ConflictError } = require('../middleware/errorHandler');
+const ApiResponse = require('../middleware/apiResponse');
 
 // === Book Management ===
 
 // Get all books (admin)
 exports.getAllBooks = asyncHandler(async (req, res) => {
   const books = await Book.find().sort({ createdAt: -1 });
-  res.json(books);
+  ApiResponse.success(res, { books }, 'Books retrieved successfully');
 });
 
 // Create book
 exports.createBook = asyncHandler(async (req, res) => {
   const bookData = { ...req.body };
 
+  // Handle cover image - either file upload or URL
   if (req.file) {
     bookData.coverImageUrl = `/uploads/books/${req.file.filename}`;
+  } else if (bookData.coverImageUrl) {
+    // If URL provided, validate it's a valid URL
+    try {
+      new URL(bookData.coverImageUrl);
+      // Keep the URL as-is
+    } catch (error) {
+      // Invalid URL format
+      bookData.coverImageUrl = '';
+    }
   }
 
   // Check for duplicate ISBN
@@ -28,15 +39,25 @@ exports.createBook = asyncHandler(async (req, res) => {
 
   const book = new Book(bookData);
   await book.save();
-  res.status(201).json(book);
+  ApiResponse.created(res, { book }, 'Book created successfully');
 });
 
 // Update book
 exports.updateBook = asyncHandler(async (req, res) => {
   const bookData = { ...req.body };
 
+  // Handle cover image - either file upload or URL
   if (req.file) {
     bookData.coverImageUrl = `/uploads/books/${req.file.filename}`;
+  } else if (bookData.coverImageUrl) {
+    // If URL provided, validate it's a valid URL
+    try {
+      new URL(bookData.coverImageUrl);
+      // Keep the URL as-is
+    } catch (error) {
+      // Invalid URL format - don't update if invalid
+      delete bookData.coverImageUrl;
+    }
   }
 
   // Check for duplicate ISBN (excluding current book)
@@ -57,7 +78,7 @@ exports.updateBook = asyncHandler(async (req, res) => {
   );
 
   if (!book) throw new NotFoundError('Book');
-  res.json(book);
+  ApiResponse.updated(res, { book }, 'Book updated successfully');
 });
 
 // Delete book
@@ -68,7 +89,7 @@ exports.deleteBook = asyncHandler(async (req, res) => {
   // Delete associated reviews
   await Review.deleteMany({ book: req.params.id });
 
-  res.json({ message: 'Book deleted successfully' });
+  ApiResponse.deleted(res, 'Book deleted successfully');
 });
 
 // === User Management ===
@@ -76,7 +97,7 @@ exports.deleteBook = asyncHandler(async (req, res) => {
 // Get all users
 exports.getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select('-password').sort({ createdAt: -1 });
-  res.json(users);
+  ApiResponse.success(res, { users }, 'Users retrieved successfully');
 });
 
 // Create user
@@ -97,13 +118,7 @@ exports.createUser = asyncHandler(async (req, res) => {
   const user = new User({ username, email, password, role: role || 'user' });
   await user.save();
 
-  res.status(201).json({
-    id: user._id,
-    username: user.username,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt
-  });
+  ApiResponse.created(res, { user }, 'User created successfully');
 });
 
 // Update user
@@ -138,13 +153,7 @@ exports.updateUser = asyncHandler(async (req, res) => {
   Object.assign(user, updateData);
   await user.save();
 
-  res.json({
-    id: user._id,
-    username: user.username,
-    email: user.email,
-    role: user.role,
-    createdAt: user.createdAt
-  });
+  ApiResponse.updated(res, { user }, 'User updated successfully');
 });
 
 // Delete user
@@ -155,7 +164,7 @@ exports.deleteUser = asyncHandler(async (req, res) => {
   // Delete associated reviews
   await Review.deleteMany({ user: req.params.id });
 
-  res.json({ message: 'User deleted successfully' });
+  ApiResponse.deleted(res, 'User deleted successfully');
 });
 
 // === Analytics ===
@@ -209,25 +218,27 @@ exports.getAnalytics = asyncHandler(async (req, res) => {
   const totalBooks = await Book.countDocuments();
   const totalReviews = await Review.countDocuments();
 
-  res.json({
-    stats: {
-      totalUsers,
-      totalBooks,
-      totalReviews
-    },
-    trendingGenres: trendingGenresAgg.map(g => ({
-      genre: g._id,
-      count: g.reviewCount,
-      rating: Number(g.avgRating.toFixed(1))
-    })),
-    centralBooks: centralBooksAgg.map(b => ({
-      id: b.bookDetails._id,
-      title: b.bookDetails.title,
-      author: b.bookDetails.author,
-      coverImageUrl: b.bookDetails.coverImageUrl,
-      reviewCount: b.reviewCount,
-      rating: Number(b.avgRating.toFixed(1))
-    }))
-  });
+  const stats = {
+    totalUsers,
+    totalBooks,
+    totalReviews
+  };
+  
+  const trendingGenres = trendingGenresAgg.map(g => ({
+    genre: g._id,
+    count: g.reviewCount,
+    rating: Number(g.avgRating.toFixed(1))
+  }));
+  
+  const centralBooks = centralBooksAgg.map(b => ({
+    id: b.bookDetails._id,
+    title: b.bookDetails.title,
+    author: b.bookDetails.author,
+    coverImageUrl: b.bookDetails.coverImageUrl,
+    reviewCount: b.reviewCount,
+    rating: Number(b.avgRating.toFixed(1))
+  }));
+
+  ApiResponse.success(res, { stats, trendingGenres, centralBooks }, 'Analytics retrieved successfully');
 });
 

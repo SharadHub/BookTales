@@ -1,6 +1,20 @@
+import { useState } from 'react';
+
 function BookCard({ book, onClick }) {
   if (!book) return null;
   const hasRating = book.averageRating && book.averageRating > 0;
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const imageSrc = imageError ? '/placeholder-book.jpg' : book.coverImageUrl || '/placeholder-book.jpg';
 
   return (
     <article
@@ -15,12 +29,18 @@ function BookCard({ book, onClick }) {
       }}
       aria-label={`${book.title} by ${book.author}, ${book.category}${book.genre ? ` - ${book.genre}` : ''}${hasRating ? `, ${book.averageRating} stars` : ', No rating'}`}
     >
-      <div className="aspect-[9/16] overflow-hidden rounded-3xl bg-slate-100">
+      <div className="aspect-[9/12] overflow-hidden rounded-3xl bg-slate-100 relative">
+        {!imageLoaded && (
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 animate-pulse" />
+        )}
         <img
-          src={book.coverImageUrl || '/placeholder-book.jpg'}
+          src={imageSrc}
           alt={`${book.title} cover`}
-          className="h-full w-full object-cover"
+          className={`h-full w-full object-cover transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           loading="lazy"
+          onError={handleImageError}
+          onLoad={handleImageLoad}
+          style={{ imageRendering: 'auto' }}
         />
       </div>
       <div className="mt-2 flex items-start justify-between gap-3">

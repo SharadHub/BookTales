@@ -17,7 +17,7 @@ const initialState = {
   error: null,
   pagination: {
     page: 1,
-    limit: 10,
+    limit: 24,
     total: 0,
     pages: 0
   },

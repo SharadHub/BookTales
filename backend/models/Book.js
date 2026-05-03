@@ -11,7 +11,7 @@ const bookSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    maxlength: 150
+    maxlength: 1000
   },
   isbn: {
     type: String,

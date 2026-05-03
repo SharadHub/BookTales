@@ -1,11 +1,69 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { adminAPI } from '../services/api';
-import { Loader2, ArrowLeft, Upload, ChevronDown } from 'lucide-react';
+import { Loader2, ArrowLeft, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 
-const CATEGORIES = ['Fiction', 'Non-Fiction'];
-const GENRES = [
-  'Mystery', 'Thriller', 'Romance', 'Science Fiction', 'Fantasy',
+// Custom Dropdown Component
+const CustomDropdown = ({ value, onChange, options, placeholder, required }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find(option => option.value === value);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="input-field appearance-none w-full text-left flex items-center justify-between py-1.5"
+        required={required}
+      >
+        <span className={selectedOption ? 'text-slate-900' : 'text-slate-400'}>
+          {selectedOption ? selectedOption.label : placeholder}
+        </span>
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4 text-slate-400" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-slate-400" />
+        )}
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+          {options.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                onChange({ target: { name: 'category', value: option.value } });
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-3 py-1.5 text-sm hover:bg-slate-50 transition-colors ${
+                option.value === value ? 'bg-primary text-white' : 'text-slate-900'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const CATEGORIES = [
+  'Fiction', 'Non-Fiction', 'Mystery', 'Thriller', 'Romance', 'Science Fiction', 'Fantasy',
   'Biography', 'History', 'Self-Help', 'Business', 'Technology',
   'Art', 'Poetry', 'Drama', 'Adventure', 'Horror', 'Young Adult',
   'Children', 'Cooking', 'Travel', 'Philosophy'
@@ -19,14 +77,15 @@ function AdminBookForm() {
   const [formData, setFormData] = useState({
     title: '',
     author: '',
-    isbn: '',
     category: '',
-    genre: '',
+    isbn: '',
+    publishedYear: '',
     description: '',
-    publishedYear: ''
+    coverImageUrl: ''
   });
   const [coverImage, setCoverImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [coverImageType, setCoverImageType] = useState('file'); // 'file' or 'url'
   const [loading, setLoading] = useState(isEdit);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState([]);
@@ -45,13 +104,17 @@ function AdminBookForm() {
         setFormData({
           title: book.title,
           author: book.author,
+          category: book.genre || book.category || '',
           isbn: book.isbn || '',
-          category: book.category,
-          genre: book.genre || '',
+          publishedYear: book.publishedYear || '',
           description: book.description || '',
-          publishedYear: book.publishedYear || ''
+          coverImageUrl: book.coverImageUrl || ''
         });
         setPreviewUrl(book.coverImageUrl);
+        // Set cover image type based on whether it's a URL or uploaded file
+        if (book.coverImageUrl && book.coverImageUrl.startsWith('http')) {
+          setCoverImageType('url');
+        }
       }
     } catch (err) {
       setErrors(['Failed to load book']);
@@ -69,6 +132,24 @@ function AdminBookForm() {
     if (file) {
       setCoverImage(file);
       setPreviewUrl(URL.createObjectURL(file));
+      setFormData({ ...formData, coverImageUrl: '' });
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData({ ...formData, coverImageUrl: url });
+    setPreviewUrl(url);
+    setCoverImage(null);
+  };
+
+  const handleCoverTypeChange = (type) => {
+    setCoverImageType(type);
+    if (type === 'file') {
+      setFormData({ ...formData, coverImageUrl: '' });
+      setPreviewUrl('');
+    } else {
+      setCoverImage(null);
     }
   };
 
@@ -76,12 +157,14 @@ function AdminBookForm() {
     const errs = [];
     if (!formData.title) errs.push('Title is required');
     if (!formData.author) errs.push('Author is required');
-    if (!formData.isbn) errs.push('ISBN is required');
     if (!formData.category) errs.push('Category is required');
+    if (!formData.isbn) errs.push('ISBN is required');
     if (!formData.publishedYear || isNaN(formData.publishedYear)) {
       errs.push('Published year must be a number');
     }
-    if (!isEdit && !coverImage) errs.push('Cover image is required');
+    if (!isEdit && !coverImage && !formData.coverImageUrl) {
+      errs.push('Cover image is required (either upload file or provide URL)');
+    }
     return errs;
   };
 
@@ -171,37 +254,110 @@ function AdminBookForm() {
                   <label className="block text-sm font-medium text-slate-700">Cover Image *</label>
                 </div>
 
-                <label className="relative group block w-60 cursor-pointer">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                  <div className="h-[360px] w-60 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:border-blue-400 group-hover:bg-blue-50/30 transition-all overflow-hidden relative shadow-sm">
-                    {previewUrl ? (
-                      <>
+                {/* Cover Image Type Selection */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleCoverTypeChange('file')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      coverImageType === 'file'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Upload File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCoverTypeChange('url')}
+                    className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                      coverImageType === 'url'
+                        ? 'bg-primary text-white'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    Image URL
+                  </button>
+                </div>
+
+                {/* File Upload Section */}
+                {coverImageType === 'file' && (
+                  <label className="relative group block w-60 cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <div className="h-[360px] w-60 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 group-hover:border-blue-400 group-hover:bg-blue-50/30 transition-all overflow-hidden relative shadow-sm">
+                      {previewUrl ? (
+                        <>
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white backdrop-blur-[2px]">
+                            <Upload size={24} className="mb-2 transform translate-y-2 group-hover:translate-y-0 transition-transform" />
+                            <span className="text-sm font-semibold">Change Cover</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="p-6 rounded-full bg-white shadow-sm border border-slate-100 mb-4 group-hover:scale-110 transition-transform">
+                            <Upload size={32} className="text-slate-400 group-hover:text-blue-500" />
+                          </div>
+                          <span className="text-sm font-semibold group-hover:text-primary">Upload cover</span>
+                        </>
+                      )}
+                    </div>
+                  </label>
+                )}
+
+                {/* URL Input Section */}
+                {coverImageType === 'url' && (
+                  <div className="w-60">
+                    <div className="h-[360px] w-60 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 overflow-hidden relative shadow-sm">
+                      {previewUrl ? (
                         <img
                           src={previewUrl}
                           alt="Preview"
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="h-[300px] w-full object-cover"
+                          onError={(e) => {
+                            e.target.src = '';
+                            setPreviewUrl('');
+                          }}
                         />
-                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white backdrop-blur-[2px]">
-                          <Upload size={24} className="mb-2 transform translate-y-2 group-hover:translate-y-0 transition-transform" />
-                          <span className="text-sm font-semibold">Change Cover</span>
+                      ) : (
+                        <div className="h-[300px] flex items-center justify-center text-slate-400">
+                          <div className="text-center">
+                            <div className="p-4 rounded-full bg-white shadow-sm border border-slate-100 mb-3">
+                              <Upload size={28} className="text-slate-400" />
+                            </div>
+                            <span className="text-sm">Image preview</span>
+                          </div>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="p-6 rounded-full bg-white shadow-sm border border-slate-100 mb-4 group-hover:scale-110 transition-transform">
-                          <Upload size={32} className="text-slate-400 group-hover:text-blue-500" />
-                        </div>
-                        <span className="text-sm font-semibold group-hover:text-primary">Upload cover</span>
-                      </>
-                    )}
+                      )}
+                      <div className="p-3 border-t border-slate-200">
+                        <input
+                          type="url"
+                          name="coverImageUrl"
+                          value={formData.coverImageUrl}
+                          onChange={handleUrlChange}
+                          placeholder="Enter image URL..."
+                          className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        />
+                      </div>
+                    </div>
                   </div>
-                </label>
-                <p className="text-xs text-slate-500 mt-1">Recommended size: 600x900px. JPG, PNG or WebP.</p>
+                )}
+
+                <p className="text-xs text-slate-500 mt-1">
+                  {coverImageType === 'file' 
+                    ? 'Recommended size: 600x900px. JPG, PNG or WebP.'
+                    : 'Provide a direct link to the book cover image.'
+                  }
+                </p>
               </div>
             </section>
           </div>
@@ -211,95 +367,64 @@ function AdminBookForm() {
             <section className="space-y-6">
               <h2 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">Book Information</h2>
 
-
-              <div className="flex flex-col sm:flex-row gap-6">
-                <div className="flex-1 max-w-xs">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
-                  <div className="relative">
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleChange}
-                      className="input-field appearance-none"
-                      required
-                    >
-                      <option value="">Select Category</option>
-                      {CATEGORIES.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
-                <div className="flex-1 max-w-xs">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Genre</label>
-                  <div className="relative">
-                    <select
-                      name="genre"
-                      value={formData.genre}
-                      onChange={handleChange}
-                      className="input-field appearance-none"
-                    >
-                      <option value="">Select Genre</option>
-                      {GENRES.map(genre => (
-                        <option key={genre} value={genre}>{genre}</option>
-                      ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-                  </div>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                <input
+                  name="title"
+                  placeholder="Enter book title"
+                  value={formData.title}
+                  onChange={handleChange}
+                  className="input-field"
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
-                  <input
-                    name="title"
-                    placeholder="Enter book title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    className="input-field"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Author *</label>
-                  <input
-                    name="author"
-                    placeholder="Enter author name"
-                    value={formData.author}
-                    onChange={handleChange}
-                    className="input-field"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Author *</label>
+                <input
+                  name="author"
+                  placeholder="Enter author name"
+                  value={formData.author}
+                  onChange={handleChange}
+                  className="input-field"
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">ISBN *</label>
-                  <input
-                    name="isbn"
-                    placeholder="e.g. 9780..."
-                    value={formData.isbn}
-                    onChange={handleChange}
-                    className="input-field"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Published Year *</label>
-                  <input
-                    name="publishedYear"
-                    type="number"
-                    placeholder="e.g. 2024"
-                    value={formData.publishedYear}
-                    onChange={handleChange}
-                    className="input-field"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+                <CustomDropdown
+                  value={formData.category}
+                  onChange={handleChange}
+                  options={CATEGORIES.map(cat => ({ value: cat, label: cat }))}
+                  placeholder="Select Category"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">ISBN *</label>
+                <input
+                  name="isbn"
+                  placeholder="e.g. 9780..."
+                  value={formData.isbn}
+                  onChange={handleChange}
+                  className="input-field"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Published Year *</label>
+                <input
+                  name="publishedYear"
+                  type="number"
+                  placeholder="e.g. 2024"
+                  value={formData.publishedYear}
+                  onChange={handleChange}
+                  className="input-field"
+                  required
+                />
               </div>
 
               <div>

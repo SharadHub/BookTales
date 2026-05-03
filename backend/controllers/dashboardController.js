@@ -1,5 +1,6 @@
 const { Review } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
+const ApiResponse = require('../middleware/apiResponse');
 
 // Get user dashboard data - returns user's reviews only
 exports.getDashboard = asyncHandler(async (req, res) => {
@@ -10,5 +11,5 @@ exports.getDashboard = asyncHandler(async (req, res) => {
     .populate('book', 'title author genre coverImageUrl')
     .sort({ createdAt: -1 });
 
-  res.json(reviews);
+  ApiResponse.success(res, { reviews }, 'Dashboard data retrieved successfully');
 });

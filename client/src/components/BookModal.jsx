@@ -6,6 +6,38 @@ import { useSelector } from 'react-redux';
 import { selectAuth } from '../store/slices/authSlice';
 import { X, Star, Loader2, Sparkles } from 'lucide-react';
 
+// BookImage component for consistent image handling
+const BookImage = ({ src, alt, className }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoaded(true);
+  };
+
+  const imageSrc = imageError ? '/placeholder-book.jpg' : src || '/placeholder-book.jpg';
+
+  return (
+    <div className="relative">
+      {!imageLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-200 to-slate-300 animate-pulse" />
+      )}
+      <img
+        src={imageSrc}
+        alt={alt}
+        className={`${className} transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+        onError={handleImageError}
+        onLoad={handleImageLoad}
+        style={{ imageRendering: 'auto' }}
+      />
+    </div>
+  );
+};
+
 function BookModal({ book, isOpen, onClose }) {
   const { user } = useSelector(selectAuth);
   const navigate = useNavigate();
@@ -157,8 +189,8 @@ function BookModal({ book, isOpen, onClose }) {
 
         <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
           <div className="overflow-hidden rounded-3xl bg-slate-100">
-            <img
-              src={book.coverImageUrl || '/placeholder-book.jpg'}
+            <BookImage 
+              src={book.coverImageUrl} 
               alt={`${book.title} book cover`}
               className="h-full w-full object-cover"
             />
@@ -321,8 +353,8 @@ function BookModal({ book, isOpen, onClose }) {
                     key={similar._id}
                     className="group flex flex-col items-center text-center"
                   >
-                    <img
-                      src={similar.coverImageUrl || '/placeholder-book.jpg'}
+                    <BookImage
+                      src={similar.coverImageUrl}
                       alt={similar.title}
                       className="w-full aspect-[2/3] object-cover rounded-xl shadow-sm group-hover:shadow-md transition-shadow mb-2"
                     />

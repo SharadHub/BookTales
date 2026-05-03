@@ -1,6 +1,7 @@
 const { Review, Book } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { NotFoundError } = require('../middleware/errorHandler');
+const ApiResponse = require('../middleware/apiResponse');
 
 // Get reviews for a book
 exports.getBookReviews = asyncHandler(async (req, res) => {
@@ -14,7 +15,7 @@ exports.getBookReviews = asyncHandler(async (req, res) => {
     .populate('user', 'username')
     .sort({ createdAt: -1 });
 
-  res.json(reviews);
+  ApiResponse.success(res, { reviews }, 'Reviews retrieved successfully');
 });
 
 // Submit or update review
@@ -32,7 +33,7 @@ exports.submitReview = asyncHandler(async (req, res) => {
     { upsert: true, new: true }
   );
 
-  res.json(review);
+  ApiResponse.success(res, { review }, 'Review submitted successfully');
 });
 
 // Delete review
@@ -42,5 +43,5 @@ exports.deleteReview = asyncHandler(async (req, res) => {
   const review = await Review.findOneAndDelete({ user: req.user._id, book: bookId });
   if (!review) throw new NotFoundError('Review');
 
-  res.json({ message: 'Review deleted successfully' });
+  ApiResponse.deleted(res, 'Review deleted successfully');
 });

@@ -90,7 +90,7 @@ function Books() {
       ) : (
         <section aria-labelledby="books-collection">
           <h2 id="books-collection" className="sr-only">Book Collection</h2>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6" aria-label="Book collection">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4" aria-label="Book collection">
             {books.map((book) => (
               <BookCard
                 key={book._id}

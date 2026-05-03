@@ -132,7 +132,7 @@ function Dashboard() {
             <h2 id="content-rec-heading" className="text-2xl font-semibold text-slate-900">Because you read...</h2>
           </div>
           <p className="text-slate-600 mb-4">Books similar to your favorites</p>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
             {contentRecommendations.map((book) => (
               <BookCard
                 key={book._id}
@@ -152,7 +152,7 @@ function Dashboard() {
             <h2 id="collab-rec-heading" className="text-2xl font-semibold text-slate-900">People with your taste liked</h2>
           </div>
           <p className="text-neutral-dark mb-4">Highly rated by readers like you</p>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
             {collaborativeRecommendations.map((book) => (
               <BookCard
                 key={book._id}

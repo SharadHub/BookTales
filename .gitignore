@@ -13,6 +13,7 @@ client/dist/
 
 # Environment variables
 .env
+.env.example
 .env.local
 .env.development.local
 .env.test.local
@@ -43,3 +44,6 @@ backend/uploads/books/*.jpeg
 backend/uploads/books/*.png
 backend/uploads/books/*.gif
 !backend/uploads/books/.gitkeep
+
+# Automation Scripts
+push_individually.sh

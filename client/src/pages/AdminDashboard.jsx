@@ -15,7 +15,11 @@ function AdminDashboard() {
   const fetchAnalytics = async () => {
     try {
       const res = await adminAPI.getAnalytics();
-      setData(res.data);
+      console.log('API Response:', res);
+      console.log('Response data:', res.data);
+      const analyticsData = res.data?.data || res.data;
+      console.log('Analytics data:', analyticsData);
+      setData(analyticsData);
     } catch (err) {
       setError('Failed to load analytics data.');
       console.error(err);
@@ -61,7 +65,7 @@ function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Total Users</p>
-            <p className="text-2xl font-bold text-slate-900">{data.stats.totalUsers}</p>
+            <p className="text-2xl font-bold text-slate-900">{data?.stats?.totalUsers || 'Loading...'}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex items-center gap-4">
@@ -70,7 +74,7 @@ function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Total Books</p>
-            <p className="text-2xl font-bold text-slate-900">{data.stats.totalBooks}</p>
+            <p className="text-2xl font-bold text-slate-900">{data?.stats?.totalBooks || 'Loading...'}</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 flex items-center gap-4">
@@ -79,7 +83,7 @@ function AdminDashboard() {
           </div>
           <div>
             <p className="text-sm font-medium text-slate-500">Total Reviews</p>
-            <p className="text-2xl font-bold text-slate-900">{data.stats.totalReviews}</p>
+            <p className="text-2xl font-bold text-slate-900">{data?.stats?.totalReviews || 'Loading...'}</p>
           </div>
         </div>
       </div>
@@ -92,7 +96,7 @@ function AdminDashboard() {
             Trending Genres
           </h2>
           <div className="space-y-4">
-            {data.trendingGenres.map((genre, index) => (
+            {data?.trendingGenres?.map((genre, index) => (
               <div key={genre.genre} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
                 <div className="flex items-center gap-3">
                   <span className="flex items-center justify-center h-8 w-8 rounded-full bg-purple-100 text-purple-700 font-bold text-sm">
@@ -119,7 +123,7 @@ function AdminDashboard() {
             Most Recommended Books (Central)
           </h2>
           <div className="space-y-4">
-            {data.centralBooks.map((book, index) => (
+            {data?.centralBooks?.map((book, index) => (
               <div key={book.id} className="flex items-center gap-4 p-4 bg-slate-50 rounded-xl">
                 <span className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-amber-100 text-amber-700 font-bold text-sm">
                   {index + 1}

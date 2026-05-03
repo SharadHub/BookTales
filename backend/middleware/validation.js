@@ -82,8 +82,8 @@ const bookValidation = [
     .trim()
     .matches(/^(?=(?:[^0-9]*[0-9]){10}(?:(?:[^0-9]*[0-9]){3})?$)[\d-]+$/).withMessage('Invalid ISBN format'),
   body('category')
-    .optional()
     .trim()
+    .notEmpty().withMessage('Category is required')
     .isLength({ max: 50 }).withMessage('Category must be under 50 characters'),
   body('genre')
     .optional()

@@ -1,6 +1,8 @@
 const express = require('express');
-const { adminController } = require('../controllers');
-const { auth, admin, upload } = require('../middleware');
+const adminController = require('../controllers/adminController');
+const auth = require('../middleware/auth');
+const admin = require('../middleware/admin');
+const { upload } = require('../middleware/upload');
 const { bookValidation, bookIdParamValidation, userValidation, userIdParamValidation } = require('../middleware/validation');
 const router = express.Router();
 
@@ -10,10 +12,10 @@ const router = express.Router();
 router.get('/books', auth, admin, adminController.getAllBooks);
 
 // Create book
-router.post('/books', auth, admin, upload.single('coverImage'), bookValidation, adminController.createBook);
+router.post('/books', auth, admin, upload, bookValidation, adminController.createBook);
 
 // Update book
-router.put('/books/:id', auth, admin, upload.single('coverImage'), bookIdParamValidation, bookValidation, adminController.updateBook);
+router.put('/books/:id', auth, admin, upload, bookIdParamValidation, bookValidation, adminController.updateBook);
 
 // Delete book
 router.delete('/books/:id', auth, admin, bookIdParamValidation, adminController.deleteBook);
